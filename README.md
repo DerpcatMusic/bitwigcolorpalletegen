@@ -6,7 +6,7 @@ It will create a Folder inside your Bitwig Color Pallete Directory for your gene
 ## Prerequisites
 
 * Python 3.x
-* Pillow (PIL) library: Install using `pip install Pillow`
+* Pillow (PIL) library: Install using `pip install numpy Pillow`
 
 ## Usage
 
