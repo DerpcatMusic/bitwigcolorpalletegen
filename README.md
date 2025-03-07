@@ -3,6 +3,9 @@
 This script generates random color palettes for use in Bitwig Studio. You can either provide your own list of colors or let the script generate a harmonious palette for you.
 It will create a Folder inside your Bitwig Color Pallete Directory for your generated Palettes.
 
+**NOTE
+ * It will NOT show up automatically, It will go into a SUB FOLDER, Inside your Bitwig Palette folder, Just drag them to the MAIN Bitwig colors folder, I jus dont wanna bloat your bitwig lol
+
 ## Prerequisites
 
 * Python 3.x
