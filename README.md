@@ -16,9 +16,9 @@ It will create a Folder inside your Bitwig Color Pallete Directory for your gene
 2.  **Run the Script:** Drag the `BitwigColorPaletteGen.py` file onto your terminal or execute it using `python BitwigColorPaletteGen.py`.
 3.  **Follow Prompts:**
     * The script will prompt you: `Would you like to generate another palette? (y/n):`
-    * You'll be Asked to Generate into the main Bitwig Color_Palettes folder,
+    * You'll be Asked to Generate into the main Bitwig Color_Palettes folder: `Save to Bitwig Color Palettes folder? (y/n, default: y):`
       * Selecting `y` will generate inside the main bitwig folder.
-      * Selecting `n` will generate into a sub folder within the Color_Palettes folder.
+      * Selecting `n` will generate into a sub folder within the Color_Palettes folder. (`Save to 'generated_palettes' subfolder within Color Palettes? (y/n, default: n):`)
     * If you choose to generate a palette (`y`), you will be asked: `Would you like to generate a harmonious palette? (y/n):`
         * Selecting `y` will generate a harmonious color palette.
         * Selecting `n` will allow you to input your own list of colors.
