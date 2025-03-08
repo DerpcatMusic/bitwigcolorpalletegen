@@ -3,6 +3,8 @@
 This script generates random color palettes for use in Bitwig Studio. You can either provide your own list of colors or let the script generate a palette for you.
 It will create a Folder inside your Bitwig Color Pallete Directory for your generated Palettes.
 
+![Image Preview](https://i.imgur.com/vgo4lPd.png)
+
 [**Download Latest Release**](https://github.com/DerpcatMusic/bitwigcolorpalletegen/releases/latest/download/BitwigColorPaletteGen.py)
 
 ## Prerequisites
@@ -11,7 +13,7 @@ It will create a Folder inside your Bitwig Color Pallete Directory for your gene
 * Pillow (PIL) library: Install using `pip install numpy Pillow`
 
 ## Usage
-   **Clicking Enter will consider as Yes (`y`)
+   **Clicking Enter will consider as Yes (`y`) **
 1.  **Ensure Dependencies:** Make sure Python and Pillow are installed on your system.
 2.  **Run the Script:** Drag the `BitwigColorPaletteGen.py` file onto your terminal or execute it using `python BitwigColorPaletteGen.py`.
 
