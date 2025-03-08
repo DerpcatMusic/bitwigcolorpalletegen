@@ -3,7 +3,7 @@
 This script generates random color palettes for use in Bitwig Studio. You can either provide your own list of colors or let the script generate a palette for you.
 It will create a Folder inside your Bitwig Color Pallete Directory for your generated Palettes.
 
-![Image Preview](https://i.imgur.com/vgo4lPd.png)
+![Image Preview](https://i.imgur.com/QsBN3MF.png)
 
 [**Download Latest Release**](https://github.com/DerpcatMusic/bitwigcolorpalletegen/releases/latest/download/BitwigColorPaletteGen.py)
 
