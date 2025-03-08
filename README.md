@@ -5,9 +5,6 @@ It will create a Folder inside your Bitwig Color Pallete Directory for your gene
 
 [**Download Latest Release**](https://github.com/DerpcatMusic/bitwigcolorpalletegen/releases/latest/download/BitwigColorPaletteGenV1.py)
 
-**NOTE
- * It will NOT show up automatically, It will go into a SUB FOLDER, Inside your Bitwig Palette folder, Just drag them to the MAIN Bitwig colors folder, I jus dont wanna bloat your bitwig lol
-
 ## Prerequisites
 
 * Python 3.x
@@ -19,6 +16,9 @@ It will create a Folder inside your Bitwig Color Pallete Directory for your gene
 2.  **Run the Script:** Drag the `BitwigColorPaletteGen.py` file onto your terminal or execute it using `python BitwigColorPaletteGen.py`.
 3.  **Follow Prompts:**
     * The script will prompt you: `Would you like to generate another palette? (y/n):`
+    * You'll be Asked to Generate into the main Bitwig Color_Palettes folder,
+      * Selecting `y` will generate inside the main bitwig folder.
+      * Selecting `n` will generate into a sub folder within the Color_Palettes folder.
     * If you choose to generate a palette (`y`), you will be asked: `Would you like to generate a harmonious palette? (y/n):`
         * Selecting `y` will generate a harmonious color palette.
         * Selecting `n` will allow you to input your own list of colors.
