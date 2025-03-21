@@ -151,7 +151,7 @@ def color_distance_rgb(color1_rgb, color2_rgb):
     r2, g2, b2 = color2_rgb
     return ((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2)**0.5
 
-def select_distinct_colors(all_colors_rgb, num_to_select=27):
+def select_distinct_colors(all_colors_rgb, num_to_select=64):
     """Selects a set of maximally distinct colors, excluding or replacing black (0,0,0)."""
     selected_colors = []
     remaining_colors = list(all_colors_rgb)
@@ -209,25 +209,25 @@ def select_distinct_colors(all_colors_rgb, num_to_select=27):
                 remaining_colors.remove(best_replacement_color)
                 print(f"Replaced Dark Gray/Black with a new distinct color: {best_replacement_color}")
             else:
-                print("Warning: No suitable replacement found for Dark Gray/Black. Palette might have < 27 colors.")
+                print("Warning: No suitable replacement found for Dark Gray/Black.")
         else:
-            print("Warning: No remaining colors to replace Dark Gray/Black. Palette might have < 27 colors.")
+            print("Warning: No remaining colors to replace Dark Gray/Black.")
     else:
         print("Dark Gray/Black color (0, 0, 0) not found in selected colors. No replacement needed.")
 
     return selected_colors
 
-distinct_27_rgb_colors = select_distinct_colors(scala_colors_rgb, num_to_select=27)
+distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=64)
 
-print(f"Selected {len(distinct_27_rgb_colors)} distinct RGB colors:")
-for color in distinct_27_rgb_colors:
+print(f"Selected {len(distinct_colors)} distinct RGB colors:")
+for color in distinct_colors:
     print(color)
 
 # --- Save the selected colors to a JSON file ---
 output_file = "mf_twister_colors.json" # Filename for saved colors
 try:
     with open(output_file, 'w') as f:
-        json.dump(distinct_27_rgb_colors, f, indent=4) # Save as JSON, nicely formatted
+        json.dump(distinct_colors, f, indent=4) # Save as JSON, nicely formatted
     print(f"Saved selected distinct colors to: {output_file}")
 except Exception as e:
     print(f"Error saving olors to {output_file}: {e}")
