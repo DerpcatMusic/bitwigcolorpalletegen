@@ -353,9 +353,40 @@ def get_save_location_choice():
         print("Please enter 'y' or 'n'.")
 
 def get_strategy_choice():
-    """Presents a menu of palette generation strategies to the user."""
+    """Presents a menu with right-justified numbers and aligned 9x3 color grid previews (inline first row)."""
+    strategies = get_strategies()
+    print("\nChoose a palette generation strategy:")
+    max_name_length = get_max_name_length(strategies)
+    indentation = max_name_length + 4 # 4 spaces padding after longest name
+
+    for number, strategy_name in strategies.items():
+        display_strategy(indentation, number, strategy_name)
+
+    while True:
+        choice = input("Enter the number of your choice: ")
+        if choice in strategies:
+            return strategies[choice]
+        else:
+            print("Invalid choice. Please enter a number from the menu.")
+
+def display_strategy(indentation, number, strategy_name):
+    strategy_out = strategy_name.replace('_', ' ').title()
+    prefix = f"{number:>2}. {strategy_out}"
+    name_padding = " " * max(0, indentation - len(strategy_out))
+    if strategy_name != "manual_input":
+        display_generated_strategy(indentation, prefix, name_padding, number, strategy_out, strategy_name)
+    else:
+        print(f"{number:>2}. {strategy_out}")
+
+def get_max_name_length(strategies):
+    max_name_length = 0
+    for strategy_name in strategies.values():
+        max_name_length = max(max_name_length, len(strategy_name.replace('_', ' ').title()))
+    return max_name_length
+
+def get_strategies():
     strategies = {
-        "0": "manual_input", # Added manual input as option 0
+        "0": "manual_input",
         "1": "distinct_hues",
         "2": "split_complementary",
         "3": "triadic_variations",
@@ -369,17 +400,37 @@ def get_strategy_choice():
         "11": "tetradic",
         "12": "mf_twister"
     }
+    return strategies
 
-    print("\nChoose a palette generation strategy:")
-    for number, strategy_name in strategies.items():
-        print(f"{number}. {strategy_name.replace('_', ' ').title()}") # Nicer display
+def display_generated_strategy(indentation, prefix, name_padding, number, strategy_out, strategy_name):
+    palette, _ = generate_random_palette(strategy_name)
+    if palette:
+        grid_lines = []
 
-    while True:
-        choice = input("Enter the number of your choice: ")
-        if choice in strategies:
-            return strategies[choice]
-        else:
-            print("Invalid choice. Please enter a number from the menu.")
+        for row_index in range(3):
+            grid_lines.append(get_grid_row(palette, grid_lines, row_index))
+
+        print(f"{prefix}{name_padding}{grid_lines[0]}")
+        indent = len(f"{prefix}{name_padding}")
+        for i in range(1, 3):
+            make_indent = " " * indent
+            print(make_indent + grid_lines[i])
+
+        print("")
+
+    else:  # Fallback for palette generation failure
+        print(f"{number:>2}. {strategy_out}")  # Plain text
+
+def get_grid_row(palette, grid_lines, row_index):
+    grid_row_line = ""
+    for col_index in range(9):
+        hex_color = palette[row_index][col_index]
+        r = int(hex_color[1:3], 16)
+        g = int(hex_color[3:5], 16)
+        b = int(hex_color[5:7], 16)
+        preview_block_ansi = f"\033[48;2;{r};{g};{b}m  \033[0m"  # 2-char block
+        grid_row_line += preview_block_ansi
+    return grid_row_line
 
 def create_palette_image(hex_codes, strategy_name): # <--- Added strategy_name parameter
     """Create and save an image from the palette hex codes, with folder choice."""
