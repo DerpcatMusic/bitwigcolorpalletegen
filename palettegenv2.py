@@ -18,7 +18,6 @@ distinct_27_rgb_colors = [] # Initialize as empty list
 try:
     with open(MF_TWISTER_COLORS_JSON_FILE, 'r') as f:
         distinct_27_rgb_colors = json.load(f)
-    print(f"Loaded {len(distinct_27_rgb_colors)} distinct colors from: {MF_TWISTER_COLORS_JSON_FILE}")
 except FileNotFoundError:
     print(f"Warning: {MF_TWISTER_COLORS_JSON_FILE} not found. 'mf_twister' strategy will use default colors or might not work.")
 except json.JSONDecodeError:
@@ -376,7 +375,7 @@ def display_strategy(indentation, number, strategy_name):
     if strategy_name != "manual_input":
         display_generated_strategy(indentation, prefix, name_padding, number, strategy_out, strategy_name)
     else:
-        print(f"{number:>2}. {strategy_out}")
+        print(f"\n{number:>2}. {strategy_out}\n")
 
 def get_max_name_length(strategies):
     max_name_length = 0
@@ -488,7 +487,7 @@ def create_palette_image(hex_codes, strategy_name): # <--- Added strategy_name p
 
 # Main program
 def main():
-    print("Welcome to the Color Palette Generator!")
+    print("\nWelcome to the Color Palette Generator!")
     print("---------------------------------------------")
 
     generate_another = True
