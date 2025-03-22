@@ -25,32 +25,6 @@ except json.JSONDecodeError:
 except Exception as e:
     print(f"Error loading colors from {MF_TWISTER_ALL_COLORS}: {e}")
 
-distinct_27_colors = []
-MF_TWISTER_27_COLORS = "mf_twister_27_colors.json" # Filename of JSON file
-
-try:
-    with open(MF_TWISTER_27_COLORS, 'r') as f:
-        distinct_27_colors = json.load(f)
-except FileNotFoundError:
-    print(f"Warning: {MF_TWISTER_27_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
-except json.JSONDecodeError:
-    print(f"Error decoding JSON from {MF_TWISTER_27_COLORS}. File might be corrupted.")
-except Exception as e:
-    print(f"Error loading colors from {MF_TWISTER_27_COLORS}: {e}")
-
-distinct_64_colors = []
-MF_TWISTER_64_COLORS = "mf_twister_64_colors.json" # Filename of JSON file
-
-try:
-    with open(MF_TWISTER_64_COLORS, 'r') as f:
-        distinct_64_colors = json.load(f)
-except FileNotFoundError:
-    print(f"Warning: {MF_TWISTER_64_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
-except json.JSONDecodeError:
-    print(f"Error decoding JSON from {MF_TWISTER_64_COLORS}. File might be corrupted.")
-except Exception as e:
-    print(f"Error loading colors from {MF_TWISTER_64_COLORS}: {e}")
-
 
 def validate_hex_color(color):
     """Validate if the input is a proper hex color code."""
@@ -393,29 +367,19 @@ def mf_twister_palette(grid_rows, grid_cols, row_shifts: List[float], hue_shifts
     """Generate palette using pre-selected 27 or 64 maximally distinct colors from JSON file,
        with optional color bias (None, 'red', 'green', 'blue')."""
     palette = create_empty_palette(grid_rows, grid_cols)
-    global distinct_all_colors, distinct_27_colors, distinct_64_colors
+    global distinct_all_colors
+    source_colors = distinct_all_colors
+    json_file_label = "all"
 
-    num_colors_needed = grid_rows * grid_cols
-
-    if num_colors_needed == 27:
-        source_colors = distinct_27_colors
-        json_file_label = "27"
-    elif num_colors_needed == 64:
-        source_colors = distinct_64_colors
-        json_file_label = "64"
-    else:
-        print(f"Error: MF Twister palette not defined for grid size {grid_cols}x{grid_rows}.")
-        return palette # Return empty palette for unsupported grid size
-
-    if not source_colors or len(source_colors) != num_colors_needed:
-        print(f"Error: {num_colors_needed} distinct RGB colors not loaded correctly for 'mf_twister' strategy ({json_file_label} colors).")
+    if not source_colors:
+        print(f"Error: distinct RGB colors not loaded correctly for 'mf_twister' strategy ({json_file_label} colors). Check '{MF_TWISTER_ALL_COLORS}'.")
         return palette # Return empty palette if colors not loaded
 
     if color_bias:
-        biased_colors_rgb = get_biased_color_selection(source_colors, num_colors_needed, color_bias)
+        biased_colors_rgb = get_biased_color_selection(source_colors, grid_rows * grid_cols, color_bias)
         hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in biased_colors_rgb]
-    else:
-        hex_colors = random.sample([hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in source_colors], num_colors_needed) # Random sample without replacement
+    else: # No bias, random selection
+        hex_colors = random.sample([hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in source_colors], grid_rows * grid_cols) # Random sample without replacement, use grid_rows * grid_cols
 
     color_index = 0
     for col in range(grid_cols):
