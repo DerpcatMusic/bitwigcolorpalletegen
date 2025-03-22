@@ -58,6 +58,12 @@ def hsv_to_hex(h, s, v):
     return f"#{r:02X}{g:02X}{b:02X}"
 
 
+def rgb_to_hls(rgb_color): # Assuming rgb_color is a tuple (r, g, b) in 0-255 range
+    r, g, b = [x / 255.0 for x in rgb_color] # Normalize to 0-1
+    h, l, s = colorsys.rgb_to_hls(r, g, b)
+    return (h, l, s) # Return HSL as a tuple
+
+
 def get_hue_shifts_input(num_rows):
     """Asks user if they want to shift hues per row and gets shift values in degrees."""
     hue_shifts_degrees = [0] * num_rows # Default no shift
@@ -674,12 +680,37 @@ def get_random_strategies() -> List[str]:
     return strategies
 
 
+def sort_palette_by_hue_saturation(palette_hex_codes): # Input is list of hex color codes
+    palette_hsl_objects = []
+    for hex_code in palette_hex_codes:
+        r = int(hex_code[1:3], 16)
+        g = int(hex_code[3:5], 16)
+        b = int(hex_code[5:7], 16)
+        rgb_color = (r, g, b)
+        hsl = rgb_to_hls(rgb_color) # <--- Ensure it calls the RENAMED rgb_to_hls function
+        palette_hsl_objects.append({'hex': hex_code, 'rgb': rgb_color, 'hsl': hsl})
+
+    def sort_key(color_object): # Key function for sorting by Hue then Saturation
+        h, s, l = color_object['hsl']
+        return (h, s) # Sort primarily by Hue, then by Saturation
+
+    sorted_palette_hsl_objects = sorted(palette_hsl_objects, key=sort_key)
+    sorted_palette_hex_codes = [color['hex'] for color in sorted_palette_hsl_objects] # Extract hex codes back
+
+    return sorted_palette_hex_codes
+
+
 def display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, number,
         strategy_out, strategy_name, hue_shifts, hex_codes=None):
     if hex_codes:
         palette = hex_codes
     else:
         palette, _ = generate_random_palette(grid_rows, grid_cols, strategy_name, hue_shifts)
+
+    if palette:
+        if strategy_name == "mf_twister":
+            palette = [sort_palette_by_hue_saturation(row) for row in palette]
+
     if palette:
         grid_lines = []
 
@@ -769,15 +800,21 @@ def create_palette_image(hex_codes, strategy, grid_rows, grid_cols):
         print(f"Pixel palette image saved to script's folder as: {filepath}")
 
     # Print the palette for reference with color preview
+    flat_hex_codes = [hex_code for row in hex_codes for hex_code in row] # Flatten 2D to 1D list
+    sorted_hex_codes = sorted(flat_hex_codes) # Sort the 1D list of hex codes
+
     print("\nHex color codes in this palette:")
-    for row in hex_codes:
-        for hex_code in row:
-            r = int(hex_code[1:3], 16)
-            g = int(hex_code[3:5], 16)
-            b = int(hex_code[5:7], 16)
-            color_preview = f"\033[48;2;{r};{g};{b}m  \033[0m" # ANSI color block
-            print(f"{color_preview} {hex_code}", end=" ") # Print preview and hex code
-        print() # New line for each row
+    hex_code_counter = 0
+    for hex_code in sorted_hex_codes:
+        r = int(hex_code[1:3], 16)
+        g = int(hex_code[3:5], 16)
+        b = int(hex_code[5:7], 16)
+        color_preview = f"\033[48;2;{r};{g};{b}m  \033[0m" # ANSI color block
+        print(f"{color_preview} {hex_code}", end=" ") # Print preview and hex code
+        hex_code_counter += 1 # <--- INCREMENT COUNTER
+        if (hex_code_counter % grid_cols) == 0: # <--- CONDITIONAL LINE BREAK
+            print() # New line after every grid_cols hex codes
+    print() # New line afte all hex codes
 
     return filename
 
