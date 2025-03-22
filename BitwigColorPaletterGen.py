@@ -389,25 +389,27 @@ def mf_twister_palette(grid_rows, grid_cols, row_shifts: List[float], hue_shifts
     return palette
 
 
-def get_biased_color_selection(source_colors_rgb, num_colors_needed, color_bias, bias_factor=1.5):
-     """Selects colors with bias towards red, green, or blue using weighted random choice."""
+def get_biased_color_selection(source_colors_rgb, num_colors_needed, bias_amounts):
+     """Selects colors with numerical bias towards red, green, or blue using weighted random choice."""
      biased_colors_rgb = []
      weights = []
 
+     bias_r = bias_amounts.get('red', 1.0)   # Safely get bias amounts, default to 1.0 if not provided
+     bias_g = bias_amounts.get('green', 1.0)
+     bias_b = bias_amounts.get('blue', 1.0)
+
      for r, g, b in source_colors_rgb:
-         if color_bias == 'red':
-             weight = r ** bias_factor  # Bias towards red
-         elif color_bias == 'green':
-             weight = g ** bias_factor  # Bias towards green
-         elif color_bias == 'blue':
-             weight = b ** bias_factor  # Bias towards blue
-         else:  # No bias (shouldn't reach here, but for safety)
-             weight = 1  # Uniform weight
+         # Calculate weight based on numerical bias amounts
+         weight = (r * bias_r) + (g * bias_g) + (b * bias_b) # Simple weighting formula
+
          weights.append(weight)
 
      # Normalize weights to create probabilities
      total_weight = sum(weights)
-     probabilities = [w / total_weight for w in weights]
+     if total_weight == 0: # Avoid division by zero if all weights are zero (unlikely, but for robustness)
+         probabilities = [1.0 / len(weights)] * len(weights) # Uniform probabilities if total weight is zero
+     else:
+         probabilities = [w / total_weight for w in weights]
 
      # Select colors based on probabilities
      choices = random.choices(source_colors_rgb, weights=probabilities, k=num_colors_needed)
