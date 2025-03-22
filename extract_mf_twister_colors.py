@@ -217,17 +217,23 @@ def select_distinct_colors(all_colors_rgb, num_to_select=64):
 
     return selected_colors
 
-distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=64)
+def save_twister_colors(num_colors):
+    output_file = f"mf_twister_{num_colors}_colors.json" # Filename for saved colors
+    try:
+        with open(output_file, 'w') as f:
+            json.dump(distinct_colors, f, indent=4) # Save as JSON, nicely formatted
+        print(f"Saved selected distinct colors to: {output_file}")
+    except Exception as e:
+        print(f"Error saving olors to {output_file}: {e}")
 
-print(f"Selected {len(distinct_colors)} distinct RGB colors:")
-for color in distinct_colors:
-    print(color)
+NUM_COLORS = 27
+distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS)
+save_twister_colors(NUM_COLORS)
 
-# --- Save the selected colors to a JSON file ---
-output_file = "mf_twister_colors.json" # Filename for saved colors
-try:
-    with open(output_file, 'w') as f:
-        json.dump(distinct_colors, f, indent=4) # Save as JSON, nicely formatted
-    print(f"Saved selected distinct colors to: {output_file}")
-except Exception as e:
-    print(f"Error saving olors to {output_file}: {e}")
+NUM_COLORS = 64
+distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS)
+save_twister_colors(NUM_COLORS)
+
+# print(f"Selected {len(distinct_colors)} distinct RGB colors:")
+# for color in distinct_colors:
+#     print(color)

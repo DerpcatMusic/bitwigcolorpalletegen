@@ -14,17 +14,22 @@ USER_DOCUMENTS = os.path.expanduser("~/Documents")
 BITWIG_PALETTE_DIR = os.path.join(USER_DOCUMENTS, "Bitwig Studio", "Color Palettes")
 GENERATED_PALETTES_SUBFOLDER = "generated_palettes" # Define subfolder name
 
-MF_TWISTER_COLORS_JSON_FILE = "mf_twister_colors.json" # Filename of JSON file
-distinct_colors = [] # Initialize as empty list
+MF_TWISTER_27_COLORS = "mf_twister_27_colors.json" # Filename of JSON file
+MF_TWISTER_64_COLORS = "mf_twister_64_colors.json" # Filename of JSON file
+distinct_27_colors = []
+distinct_64_colors = []
+
 try:
-    with open(MF_TWISTER_COLORS_JSON_FILE, 'r') as f:
-        distinct_colors = json.load(f)
+    with open(MF_TWISTER_27_COLORS, 'r') as f:
+        distinct_27_colors = json.load(f)
+    with open(MF_TWISTER_64_COLORS, 'r') as f:
+        distinct_64_colors = json.load(f)
 except FileNotFoundError:
-    print(f"Warning: {MF_TWISTER_COLORS_JSON_FILE} not found. 'mf_twister' strategy will use default colors or might not work.")
+    print(f"Warning: {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
 except json.JSONDecodeError:
-    print(f"Error decoding JSON from {MF_TWISTER_COLORS_JSON_FILE}. File might be corrupted.")
+    print(f"Error decoding JSON from {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS}. File might be corrupted.")
 except Exception as e:
-    print(f"Error loading colors from {MF_TWISTER_COLORS_JSON_FILE}: {e}")
+    print(f"Error loading colors from {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS}: {e}")
 
 def validate_hex_color(color):
     """Validate if the input is a proper hex color code."""
@@ -353,19 +358,27 @@ def rainbow_desaturated_rows_palette(grid_rows, grid_cols, row_shifts, hue_shift
 def mf_twister_palette(grid_rows, grid_cols, row_shifts: List[float], hue_shifts) -> List[List[str]]:
     """Generate palette using pre-selected 27 or 64 maximally distinct colors from JSON file."""
     palette = create_empty_palette(grid_rows, grid_cols)
-    global distinct_colors
-    if not distinct_colors or (len(distinct_colors) != 27 and len(distinct_colors) != 64):
-        print("Error: 27 or 64 distinct RGB colors not loaded correctly for 'mf_twister' strategy.")
-        return palette # Return empty palette in case of error
-
-    hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in distinct_colors]
-
-    color_index = 0
-    for col in range(grid_cols):
-        for row in range(grid_rows):
-            palette[row][col] = hex_colors[color_index]
-            color_index += 1
-    return palette
+    global distinct_27_colors
+    global distinct_64_colors
+    hex_colors = []
+    if grid_rows == 3:
+        if not distinct_27_colors or (len(distinct_27_colors) != 27):
+            print("Error: 27 distinct RGB colors not loaded correctly for 'mf_twister' strategy.")
+            return palette # Return empty palette in case of error
+        hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in distinct_27_colors]
+    if grid_rows == 4:
+        if not distinct_64_colors or (len(distinct_64_colors) != 64):
+            print("Error: 64 distinct RGB colors not loaded correctly for 'mf_twister' strategy.")
+            return palette # Return empty palette in case of error
+        hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in distinct_64_colors]
+    if len(hex_colors) > 0:
+        color_index = 0
+        for col in range(grid_cols):
+            for row in range(grid_rows):
+                palette[row][col] = hex_colors[color_index]
+                color_index += 1
+        return palette
+    return []
 
 strategy_functions = {
     "distinct_hues": distinct_hues_palette,
