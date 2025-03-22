@@ -504,7 +504,7 @@ def get_strategy_choice(grid_cols, grid_rows, hue_shifts):
 
 
 def display_strategy(grid_cols, grid_rows, indentation, number, strategy_name, hue_shifts):
-    strategy_out = strategy_name.replace('_', ' ').title()
+    strategy_out = prettify_name(strategy_name)
     prefix = f"{number:>2}. {strategy_out}"
     name_padding = " " * max(0, indentation - len(strategy_out))
     if strategy_name != "manual_input":
@@ -512,10 +512,15 @@ def display_strategy(grid_cols, grid_rows, indentation, number, strategy_name, h
     else:
         print(f"\n{number:>2}. {strategy_out}\n")
 
+def prettify_name(name):
+    name = name.replace('_', ' ').title()
+    name = name.replace("Mf ", "MF ")
+    return name
+
 def get_max_name_length(strategies):
     max_name_length = 0
     for strategy_name in strategies.values():
-        max_name_length = max(max_name_length, len(strategy_name.replace('_', ' ').title()))
+        max_name_length = max(max_name_length, len(prettify_name(strategy_name)))
     return max_name_length
 
 def get_strategies():
@@ -679,7 +684,7 @@ def main():
         if strategy != "manual_input": # If not manual input, generate random
             # Generate random palette with the chosen strategy
             hex_codes, strategy = generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts)
-            print(f"Palette generated using strategy: {strategy.replace('_', ' ').title()}") # Nicer display
+            print(f"Palette generated using strategy: {prettify_name(strategy)}")
         else: # Manual input selected
             # Initialize empty hex_codes list with the same structure
             hex_codes = [
