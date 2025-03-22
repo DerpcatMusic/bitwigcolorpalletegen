@@ -464,20 +464,45 @@ def generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts, color_bi
 
 
 def get_color_bias_input():
-    """Asks the user for color bias preference for MF Twister palette (simplified prompt)."""
-    while True:
-        bias_choice = input("MF Twister bias? ('r', 'g', 'b', or Enter for none): ").lower() # Simplified prompt
-        if bias_choice in ['', 'r', 'g', 'b', 'red', 'green', 'blue', 'none', 'no bias']: # Accept empty input for no bias
-            if bias_choice in ['', 'none', 'no bias']:
-                return None # No bias
-            elif bias_choice in ['r', 'red']:
-                return 'red' # Red bias
-            elif bias_choice in ['g', 'green']:
-                return 'green' # Green bias
-            elif bias_choice in ['b', 'blue']:
-                return 'blue' # Blue bias
-            # return bias_choice # No longer needed as bias_choice is already validated in if condition
-        print("Invalid choice. Please enter 'r', 'g', 'b', or press Enter for no bias.")
+    """Asks the user for numerical color bias amounts for R, G, B (default 1.0 for no bias)."""
+    bias_amounts = {} # Use a dictionary to store bias amounts
+
+    print("\nEnter numerical bias amounts for Red, Green, Blue (default 1.0 for no bias):")
+
+    while True: # Loop for Red bias input
+        r_bias_input = input("  Red bias amount (default 1.0): ").strip() # Add .strip() to remove whitespace
+        if r_bias_input == '':
+            bias_amounts['red'] = 1.0 # Default for Red
+            break
+        try:
+            bias_amounts['red'] = float(r_bias_input)
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid number for Red bias (e.g., 1, 1.0, 1.5).") # More informative message
+
+    while True: # Loop for Green bias input
+        g_bias_input = input("  Green bias amount (default 1.0): ").strip() # Add .strip()
+        if g_bias_input == '':
+            bias_amounts['green'] = 1.0 # Default for Green
+            break
+        try:
+            bias_amounts['green'] = float(g_bias_input)
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid number for Green bias (e.g., 1, 1.0, 1.5).") # More informative message
+
+    while True: # Loop for Blue bias input
+        b_bias_input = input("  Blue bias amount (default 1.0): ").strip() # Add .strip()
+        if b_bias_input == '':
+            bias_amounts['blue'] = 1.0 # Default for Blue
+            break
+        try:
+            bias_amounts['blue'] = float(b_bias_input)
+            break
+        except ValueError:
+            print("Invalid input. Please enter a valid number for Blue bias (e.g., 1, 1.0, 1.5).") # More informative message
+
+    return bias_amounts # Return the dictionary of bias amounts
 
 
 def preview_mf_twister_palette(hex_codes, strategy, grid_rows, grid_cols, color_bias):
