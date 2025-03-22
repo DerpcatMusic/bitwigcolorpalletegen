@@ -1,11 +1,9 @@
-
 # --- START OF FILE Bitwig Color Palette Generator.py ---
 from PIL import Image
 import random
 import os
 import datetime
 import colorsys
-
 from typing import List
 import json
 
@@ -14,22 +12,45 @@ USER_DOCUMENTS = os.path.expanduser("~/Documents")
 BITWIG_PALETTE_DIR = os.path.join(USER_DOCUMENTS, "Bitwig Studio", "Color Palettes")
 GENERATED_PALETTES_SUBFOLDER = "generated_palettes" # Define subfolder name
 
-MF_TWISTER_27_COLORS = "mf_twister_27_colors.json" # Filename of JSON file
-MF_TWISTER_64_COLORS = "mf_twister_64_colors.json" # Filename of JSON file
+MF_TWISTER_ALL_COLORS = "mf_twister_all_colors.json" # Filename of JSON file
+distinct_all_colors = []
+
+try:
+    with open(MF_TWISTER_ALL_COLORS, 'r') as f:
+        distinct_all_colors = json.load(f)
+except FileNotFoundError:
+    print(f"Warning: {MF_TWISTER_ALL_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
+except json.JSONDecodeError:
+    print(f"Error decoding JSON from {MF_TWISTER_ALL_COLORS}. File might be corrupted.")
+except Exception as e:
+    print(f"Error loading colors from {MF_TWISTER_ALL_COLORS}: {e}")
+
 distinct_27_colors = []
-distinct_64_colors = []
+MF_TWISTER_27_COLORS = "mf_twister_27_colors.json" # Filename of JSON file
 
 try:
     with open(MF_TWISTER_27_COLORS, 'r') as f:
         distinct_27_colors = json.load(f)
+except FileNotFoundError:
+    print(f"Warning: {MF_TWISTER_27_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
+except json.JSONDecodeError:
+    print(f"Error decoding JSON from {MF_TWISTER_27_COLORS}. File might be corrupted.")
+except Exception as e:
+    print(f"Error loading colors from {MF_TWISTER_27_COLORS}: {e}")
+
+distinct_64_colors = []
+MF_TWISTER_64_COLORS = "mf_twister_64_colors.json" # Filename of JSON file
+
+try:
     with open(MF_TWISTER_64_COLORS, 'r') as f:
         distinct_64_colors = json.load(f)
 except FileNotFoundError:
-    print(f"Warning: {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
+    print(f"Warning: {MF_TWISTER_64_COLORS} not found. 'mf_twister' strategy will use default colors or might not work.")
 except json.JSONDecodeError:
-    print(f"Error decoding JSON from {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS}. File might be corrupted.")
+    print(f"Error decoding JSON from {MF_TWISTER_64_COLORS}. File might be corrupted.")
 except Exception as e:
-    print(f"Error loading colors from {MF_TWISTER_27_COLORS} or {MF_TWISTER_64_COLORS}: {e}")
+    print(f"Error loading colors from {MF_TWISTER_64_COLORS}: {e}")
+
 
 def validate_hex_color(color):
     """Validate if the input is a proper hex color code."""
@@ -42,6 +63,7 @@ def validate_hex_color(color):
     except ValueError:
         return False
 
+
 def get_color_input(row, col):
     """Get and validate color input from user."""
     while True:
@@ -52,6 +74,7 @@ def get_color_input(row, col):
         else:
             print("Invalid hex color format. Please use format #RRGGBB (e.g., #FF0000 for red)")
 
+
 def hsv_to_hex(h, s, v):
     """Convert HSV color to hex color code."""
     r, g, b = colorsys.hsv_to_rgb(h, s, v)
@@ -60,10 +83,10 @@ def hsv_to_hex(h, s, v):
     b = int(b * 255)
     return f"#{r:02X}{g:02X}{b:02X}"
 
+
 def get_hue_shifts_input(num_rows):
     """Asks user if they want to shift hues per row and gets shift values in degrees."""
     hue_shifts_degrees = [0] * num_rows # Default no shift
-
     while True:
         shift_choice = input("Do you want to apply hue shifts to each row? (y/n, default: n): ").lower()
         if shift_choice in ['y', 'yes']:
@@ -88,33 +111,33 @@ def get_hue_shifts_input(num_rows):
         else:
             print("Please enter 'y' or 'n'.")
 
+
 def create_empty_palette(grid_rows, grid_cols) -> List[List[str]]:
     """Creates and returns an empty 3x9 or 4x16 palette (list of lists)."""
     return [
         ["" for _ in range(grid_cols)] for _ in range(grid_rows)
     ]
 
-def distinct_hues_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def distinct_hues_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using distinct hues strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     # distinct hues with lightness variations by row
     base_hues = [(i / grid_cols + random.random() * 0.03) % 1.0 for i in range(grid_cols)] # Adjusted for grid_cols
     random.shuffle(base_hues)  # Shuffle for unpredictability
-
     for col in range(grid_cols):
         base_hue = base_hues[col]
         for row in range(grid_rows):
             # Apply row-specific hue shift and user hue shift
             shifted_hue = (base_hue + row_shifts[row] + hue_shifts[row]) % 1.0
-
             # Vary saturation and value by row
             saturation = 0.3 + row * (0.6 / grid_rows) + random.random() * 0.15 # Adjusted saturation range and row scaling
             value = 0.9 - row * (0.5 / grid_rows) + random.random() * 0.1 # Adjusted value range and row scaling
-
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def split_complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def split_complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using split complementary strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     base_hue = random.random()
@@ -147,7 +170,8 @@ def split_complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def triadic_variations_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def triadic_variations_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using triadic variations strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     hue1 = random.random()
@@ -176,12 +200,13 @@ def triadic_variations_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             shifted_hue = (hue_variations[col] + row_shifts[row] + hue_shifts[row]) % 1.0
 
             # Vary saturation and value differently for each row
-            saturation = 0.4 + row * (0.5 / grid_rows) + random.random() * 0.15 # Adjusted saturation range and row scaling
+            saturation = 0.4 + row * (0.5 / grid_rows) + random.random() * 0.2 # Adjusted saturation range and row scaling
             value = 0.9 - row * (0.5 / grid_rows) + random.random() * 0.1 # Adjusted value range and row scaling
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def analogous_extended_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def analogous_extended_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using analogous extended strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     start_hue = random.random()
@@ -196,12 +221,13 @@ def analogous_extended_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             # Apply row-specific hue shift and user hue shift
             shifted_hue = (base_hue + row_shifts[row] + hue_shifts[row]) % 1.0
 
-            saturation = 0.5 + row * (0.4 / grid_rows) + random.random() * 0.15 # Adjusted saturation range and row scaling
+            saturation = 0.5 + row * (0.4 / grid_rows) + random.random() * 0.2 # Adjusted saturation range and row scaling
             value = 0.9 - row * (0.5 / grid_rows) + random.random() * 0.1 # Adjusted value range and row scaling
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def monochromatic_columns_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def monochromatic_columns_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using monochromatic columns strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     for col in range(grid_cols):
@@ -217,7 +243,8 @@ def monochromatic_columns_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def warm_cool_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def warm_cool_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using warm cool contrast strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     warm_hues = [random.uniform(0.95, 0.15) for _ in range(grid_cols // 2 + 1)]  # Increased warm hues, adjusted for grid_cols
@@ -239,7 +266,8 @@ def warm_cool_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def pastel_dark_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def pastel_dark_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using pastel dark contrast strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     hues = [random.random() for _ in range(grid_cols)]
@@ -261,7 +289,8 @@ def pastel_dark_contrast_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def random_with_harmony_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def random_with_harmony_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using random with harmony strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     for col in range(grid_cols):
@@ -291,7 +320,8 @@ def random_with_harmony_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using complementary strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     base_hue = random.random()
@@ -308,7 +338,8 @@ def complementary_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def shades_of_gray_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def shades_of_gray_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using shades of gray strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     base_hue = random.uniform(0, 1) # slight tint
@@ -320,7 +351,8 @@ def shades_of_gray_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def tetradic_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def tetradic_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using tetradic strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     base_hue = random.random()
@@ -342,7 +374,8 @@ def tetradic_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def rainbow_desaturated_rows_palette(grid_rows, grid_cols, row_shifts, hue_shifts):
+
+def rainbow_desaturated_rows_palette(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=None):
     """Generate palette using rainbow desaturated rows strategy."""
     palette = create_empty_palette(grid_rows, grid_cols)
     for col in range(grid_cols):
@@ -355,30 +388,68 @@ def rainbow_desaturated_rows_palette(grid_rows, grid_cols, row_shifts, hue_shift
             palette[row][col] = hsv_to_hex(shifted_hue, saturation, value)
     return palette
 
-def mf_twister_palette(grid_rows, grid_cols, row_shifts: List[float], hue_shifts) -> List[List[str]]:
-    """Generate palette using pre-selected 27 or 64 maximally distinct colors from JSON file."""
+
+def mf_twister_palette(grid_rows, grid_cols, row_shifts: List[float], hue_shifts, color_bias=None) -> List[List[str]]:
+    """Generate palette using pre-selected 27 or 64 maximally distinct colors from JSON file,
+       with optional color bias (None, 'red', 'green', 'blue')."""
     palette = create_empty_palette(grid_rows, grid_cols)
-    global distinct_27_colors
-    global distinct_64_colors
-    hex_colors = []
-    if grid_rows == 3:
-        if not distinct_27_colors or (len(distinct_27_colors) != 27):
-            print("Error: 27 distinct RGB colors not loaded correctly for 'mf_twister' strategy.")
-            return palette # Return empty palette in case of error
-        hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in distinct_27_colors]
-    if grid_rows == 4:
-        if not distinct_64_colors or (len(distinct_64_colors) != 64):
-            print("Error: 64 distinct RGB colors not loaded correctly for 'mf_twister' strategy.")
-            return palette # Return empty palette in case of error
-        hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in distinct_64_colors]
-    if len(hex_colors) > 0:
-        color_index = 0
-        for col in range(grid_cols):
-            for row in range(grid_rows):
-                palette[row][col] = hex_colors[color_index]
-                color_index += 1
-        return palette
-    return []
+    global distinct_all_colors, distinct_27_colors, distinct_64_colors
+
+    num_colors_needed = grid_rows * grid_cols
+
+    if num_colors_needed == 27:
+        source_colors = distinct_27_colors
+        json_file_label = "27"
+    elif num_colors_needed == 64:
+        source_colors = distinct_64_colors
+        json_file_label = "64"
+    else:
+        print(f"Error: MF Twister palette not defined for grid size {grid_cols}x{grid_rows}.")
+        return palette # Return empty palette for unsupported grid size
+
+    if not source_colors or len(source_colors) != num_colors_needed:
+        print(f"Error: {num_colors_needed} distinct RGB colors not loaded correctly for 'mf_twister' strategy ({json_file_label} colors).")
+        return palette # Return empty palette if colors not loaded
+
+    if color_bias:
+        biased_colors_rgb = get_biased_color_selection(source_colors, num_colors_needed, color_bias)
+        hex_colors = [hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in biased_colors_rgb]
+    else:
+        hex_colors = random.sample([hsv_to_hex(*colorsys.rgb_to_hsv(r/255.0, g/255.0, b/255.0)) for r, g, b in source_colors], num_colors_needed) # Random sample without replacement
+
+    color_index = 0
+    for col in range(grid_cols):
+        for row in range(grid_rows):
+            palette[row][col] = hex_colors[color_index]
+            color_index += 1
+    return palette
+
+
+def get_biased_color_selection(source_colors_rgb, num_colors_needed, color_bias, bias_factor=1.5):
+     """Selects colors with bias towards red, green, or blue using weighted random choice."""
+     biased_colors_rgb = []
+     weights = []
+
+     for r, g, b in source_colors_rgb:
+         if color_bias == 'red':
+             weight = r ** bias_factor  # Bias towards red
+         elif color_bias == 'green':
+             weight = g ** bias_factor  # Bias towards green
+         elif color_bias == 'blue':
+             weight = b ** bias_factor  # Bias towards blue
+         else:  # No bias (shouldn't reach here, but for safety)
+             weight = 1  # Uniform weight
+         weights.append(weight)
+
+     # Normalize weights to create probabilities
+     total_weight = sum(weights)
+     probabilities = [w / total_weight for w in weights]
+
+     # Select colors based on probabilities
+     choices = random.choices(source_colors_rgb, weights=probabilities, k=num_colors_needed)
+     biased_colors_rgb.extend(choices)
+     return biased_colors_rgb
+
 
 strategy_functions = {
     "distinct_hues": distinct_hues_palette,
@@ -396,32 +467,75 @@ strategy_functions = {
     "mf_twister": mf_twister_palette
 }
 
-def generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts):
+
+def generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts, color_bias=None):
     """Generate a palette based on the chosen strategy."""
     # Randomize the seed for truly different results each time
     random.seed(datetime.datetime.now().timestamp())
 
     # Generate row hue shifts (each row has a slight hue shift)
     row_shifts = [0.0]  # First row has no shift
-    if grid_rows >= 2: row_shifts.append(random.uniform(0.02, 0.06))  # Second row shifts slightly (reduced shift)
-    if grid_rows >= 3: row_shifts.append(random.uniform(0.04, 0.10))  # Third row shifts more (adjusted range)
-    if grid_rows >= 4: row_shifts.append(random.uniform(0.06, 0.14))  # Fourth row shifts even more (new row)
-    while len(row_shifts) < grid_rows: # Pad with 0s if more rows than default shifts
+    if grid_rows >= 2:
+        row_shifts.append(random.uniform(0.02, 0.06))  # Second row shifts slightly (reduced shift)
+    if grid_rows >= 3:
+        row_shifts.append(random.uniform(0.04, 0.10))  # Third row shifts more (adjusted range)
+    if grid_rows >= 4:
+        row_shifts.append(random.uniform(0.06, 0.14))  # Fourth row shifts even more (new row)
+    while len(row_shifts) < grid_rows:  # Pad with 0s if more rows than default shifts
         row_shifts.append(0)
-    row_shifts = row_shifts[:grid_rows] # Truncate if less rows than default shifts
+    row_shifts = row_shifts[:grid_rows]  # Truncate if less rows than default shifts
 
     # Randomize shift direction
     if random.choice([True, False]):
-        for i in range(1, grid_rows): # Apply to all shift rows
+        for i in range(1, grid_rows):  # Apply to all shift rows
             row_shifts[i] *= -1
 
-    if strategy in strategy_functions: # Check if strategy is in our dictionary
+    if strategy in strategy_functions:  # Check if strategy is in our dictionary
         palette_function = strategy_functions[strategy]
-        palette = palette_function(grid_rows, grid_cols, row_shifts, hue_shifts) # Call the corresponding function
+        palette = palette_function(grid_rows, grid_cols, row_shifts, hue_shifts, color_bias=color_bias)
         return palette, strategy
     else:
         # Handle cases where the strategy is not found (e.g., manual_input - although manual_input is handled outside this function now)
-        return None, strategy # Or raise an exception if that's more appropriate for your error handling
+        return None, strategy  # Or raise an exception if that's more appropriate for your error handling
+
+
+def get_color_bias_input():
+    """Asks the user for color bias preference for MF Twister palette (simplified prompt)."""
+    while True:
+        bias_choice = input("MF Twister bias? ('r', 'g', 'b', or Enter for none): ").lower() # Simplified prompt
+        if bias_choice in ['', 'r', 'g', 'b', 'red', 'green', 'blue', 'none', 'no bias']: # Accept empty input for no bias
+            if bias_choice in ['', 'none', 'no bias']:
+                return None # No bias
+            elif bias_choice in ['r', 'red']:
+                return 'red' # Red bias
+            elif bias_choice in ['g', 'green']:
+                return 'green' # Green bias
+            elif bias_choice in ['b', 'blue']:
+                return 'blue' # Blue bias
+            # return bias_choice # No longer needed as bias_choice is already validated in if condition
+        print("Invalid choice. Please enter 'r', 'g', 'b', or press Enter for no bias.")
+
+
+def preview_mf_twister_palette(hex_codes, strategy, grid_rows, grid_cols, color_bias):
+    """Displays a preview of the generated MF Twister palette with bias."""
+    strategy_out = prettify_name(strategy)
+    if color_bias:
+        bias_text = f" (Bias: {color_bias.title()})" # e.g., " (Bias: Red)"
+    else:
+        bias_text = " (No Bias)"
+
+    print(f"\nPreview of MF Twister Palette: {strategy_out}{bias_text} - {grid_cols}x{grid_rows} grid:")
+    # Print the palette for preview with color blocks (similar to create_palette_image's print)
+    for row in hex_codes:
+        for hex_code in row:
+            r = int(hex_code[1:3], 16)
+            g = int(hex_code[3:5], 16)
+            b = int(hex_code[5:7], 16)
+            color_preview = f"\033[48;2;{r};{g};{b}m  \033[0m" # ANSI color block
+            print(f"{color_preview} {hex_code}", end=" ")
+        print() # New line for each row
+    print() # Add extra blank line after preview
+
 
 def generate_unique_filename(strategy_name="pixel_palette", extension=".png"):
     """Generate a unique filename based on strategy and persistent counter (no timestamp)."""
@@ -455,6 +569,7 @@ def generate_unique_filename(strategy_name="pixel_palette", extension=".png"):
     # return f"{base_name}_{timestamp}{extension}" # <-- Original line with timestamp
     return f"{base_name}{extension}" # <-- Modified line: Timestamp removed
 
+
 def get_save_location_choice():
     """Asks the user for the output folder choice."""
     while True:
@@ -473,13 +588,15 @@ def get_save_location_choice():
                     print("Please enter 'y' or 'n'.")
         print("Please enter 'y' or 'n'.")
 
+
 def get_strategy_choice(grid_cols, grid_rows, hue_shifts):
-    """Presents a menu of palette generation strategies to the user with color previews and vertical spacing, and random algorithm option."""
+    """Presents a menu ... (unchanged - just removed the preview palette generation to avoid side-effects during menu creation)."""
     strategies = get_strategies()
     random_strategies = get_random_strategies()
+
     print("\nChoose a palette generation strategy:")
     max_name_length = get_max_name_length(strategies)
-    indentation = max_name_length + 4 # 4 spaces padding after longest name
+    indentation = max_name_length + 4
 
     for number, strategy_name in strategies.items():
         display_strategy(grid_cols, grid_rows, indentation, number, strategy_name, hue_shifts)
@@ -488,7 +605,7 @@ def get_strategy_choice(grid_cols, grid_rows, hue_shifts):
         choice = input("Enter the number of your choice: ")
         if choice in strategies:
             chosen_strategy_key = strategies[choice]
-            if chosen_strategy_key == "manual_input_or_random":
+            if chosen_strategy_key == "manual_input":
                 while True:
                     manual_random_choice = input("Choose 'm' for Manual Input or 'r' for Random Algorithm: ").lower()
                     if manual_random_choice == 'm':
@@ -503,19 +620,22 @@ def get_strategy_choice(grid_cols, grid_rows, hue_shifts):
             print("Invalid choice. Please enter a number from the menu.")
 
 
-def display_strategy(grid_cols, grid_rows, indentation, number, strategy_name, hue_shifts):
+def display_strategy(grid_cols, grid_rows, indentation, number, strategy_name, hue_shifts, hex_codes=None):
     strategy_out = prettify_name(strategy_name)
     prefix = f"{number:>2}. {strategy_out}"
     name_padding = " " * max(0, indentation - len(strategy_out))
     if strategy_name != "manual_input":
-        display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, number, strategy_out, strategy_name, hue_shifts)
+        display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, number, strategy_out,
+            strategy_name, hue_shifts, hex_codes=hex_codes)
     else:
         print(f"\n{number:>2}. {strategy_out}\n")
+
 
 def prettify_name(name):
     name = name.replace('_', ' ').title()
     name = name.replace("Mf ", "MF ")
     return name
+
 
 def get_max_name_length(strategies):
     max_name_length = 0
@@ -523,9 +643,10 @@ def get_max_name_length(strategies):
         max_name_length = max(max_name_length, len(prettify_name(strategy_name)))
     return max_name_length
 
+
 def get_strategies():
     strategies = {
-        "0": "manual_input",
+        "0": "manual_input", # "0": "manual_input_or_random", # combined manual and random
         "1": "distinct_hues",
         "2": "split_complementary",
         "3": "triadic_variations",
@@ -541,6 +662,7 @@ def get_strategies():
         "13": "mf_twister"
     }
     return strategies
+
 
 def get_random_strategies() -> List[str]:
     strategies = [
@@ -560,8 +682,13 @@ def get_random_strategies() -> List[str]:
     ]
     return strategies
 
-def display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, number, strategy_out, strategy_name, hue_shifts):
-    palette, _ = generate_random_palette(grid_rows, grid_cols, strategy_name, hue_shifts)
+
+def display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, number,
+        strategy_out, strategy_name, hue_shifts, hex_codes=None):
+    if hex_codes:
+        palette = hex_codes
+    else:
+        palette, _ = generate_random_palette(grid_rows, grid_cols, strategy_name, hue_shifts)
     if palette:
         grid_lines = []
 
@@ -578,6 +705,7 @@ def display_generated_strategy(grid_cols, grid_rows, prefix, name_padding, numbe
     else:  # Fallback for palette generation failure
         print(f"{number:>2}. {strategy_out}")  # Plain text
 
+
 def get_grid_row(palette, grid_lines, row_index, grid_cols):
     grid_row_line = ""
     for col_index in range(grid_cols):
@@ -589,6 +717,7 @@ def get_grid_row(palette, grid_lines, row_index, grid_cols):
         grid_row_line += preview_block_ansi
     return grid_row_line
 
+
 def get_grid_size_choice():
     """Asks the user to choose the grid size."""
     while True:
@@ -599,6 +728,7 @@ def get_grid_size_choice():
             return 9, 3 # 9x3 grid
         else:
             print("Invalid choice. Please enter '1' or '2'.")
+
 
 def create_palette_image(hex_codes, strategy, grid_rows, grid_cols):
     """Create and save an image from the palette hex codes, with folder choice and strategy for filename."""
@@ -647,7 +777,6 @@ def create_palette_image(hex_codes, strategy, grid_rows, grid_cols):
     else:
         print(f"Pixel palette image saved to script's folder as: {filepath}")
 
-
     # Print the palette for reference with color preview
     print("\nHex color codes in this palette:")
     for row in hex_codes:
@@ -659,13 +788,13 @@ def create_palette_image(hex_codes, strategy, grid_rows, grid_cols):
             print(f"{color_preview} {hex_code}", end=" ") # Print preview and hex code
         print() # New line for each row
 
-
     return filename
+
 
 # Main program
 def main():
     print("\nWelcome to the Color Palette Generator!")
-    print("---------------------------------------------")
+    print("---------------------------------------")
 
     generate_another = True
 
@@ -676,46 +805,80 @@ def main():
         print(f"Generating {grid_size_text} palette.")
 
         # Get strategy choice from menu
-        strategy = get_strategy_choice(grid_cols, grid_rows, [0] * grid_rows)
+        hex_codes = []
+        hue_shifts = [0] * grid_rows  # Initialize hue_shifts here
+        strategy = get_strategy_choice(grid_cols, grid_rows, hue_shifts)
 
-        # Get hue shifts after strategy is chosen
-        hue_shifts = get_hue_shifts_input(grid_rows)
+        color_bias_choice = None  # Initialize color_bias_choice
 
-        if strategy != "manual_input": # If not manual input, generate random
-            # Generate random palette with the chosen strategy
-            hex_codes, strategy = generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts)
-            print(f"Palette generated using strategy: {prettify_name(strategy)}")
-        else: # Manual input selected
-            # Initialize empty hex_codes list with the same structure
-            hex_codes = [
-                ["" for _ in range(grid_cols)] for _ in range(grid_rows)
-            ]
+        match strategy: # Use match-case statement for strategy dispatch
+            case "mf_twister": # MF Twister interactive preview loop
+                strategies = get_strategies()
+                max_name_length = get_max_name_length(strategies)
+                indentation = max_name_length + 4
+                bias_preview_loop = True
+                while bias_preview_loop:
+                    color_bias_choice = get_color_bias_input()
+                    hex_codes, strategy = generate_random_palette(grid_rows, grid_cols, strategy,
+                        hue_shifts, color_bias_choice)
+                    display_strategy(grid_cols, grid_rows, indentation, 13, "mf_twister", hue_shifts, hex_codes=hex_codes)
 
-            print(f"Please enter {grid_rows * grid_cols} colors in hex format (#RRGGBB)") # Updated count
-            print("---------------------------------------------")
+                    while True: # Bias preview menu loop
+                        preview_action = input("Choose option: 'a' - Accept Palette, 's' - See Another Preview, 'b' - Choose Different Bias: ").lower()
+                        if preview_action == 'a':
+                            bias_preview_loop = False
+                            break
+                        elif preview_action == 's':
+                            break
+                        elif preview_action == 'b':
+                            bias_preview_loop = True
+                            break
+                        else:
+                            print("Invalid choice. Please enter 'a', 's', or 'b'.")
 
-            # Get all colors from user input
-            for row in range(grid_rows): # Updated loop range
-                for col in range(grid_cols): # Updated loop range
-                    hex_codes[row][col] = get_color_input(row, col)
+            case "manual_input": # Manual input selected
+                # Initialize empty hex_codes list with the grid size
+                hex_codes = [
+                    ["" for _ in range(grid_cols)] for _ in range(grid_rows)
+                ]
+                print(f"Please enter {grid_rows * grid_cols} colors in hex format (#RRGGBB)")
+                print("---------------------------------------------")
+                # Get all colors from user input
+                for row in range(grid_rows): # Updated loop range
+                    for col in range(grid_cols): # Updated loop range
+                        hex_codes[row][col] = get_color_input(row, col)
+
+            case "random_algorithm": # Random Algorithm selected
+                hex_codes = [
+                    ["" for _ in range(grid_cols)] for _ in range(grid_rows)
+                ]  # Initialize empty hex_codes for random
+                print("Random Algorithm")
+                hex_codes, strategy = generate_random_palette(grid_rows, grid_cols, random.choice(get_random_strategies()), hue_shifts)
+                print(f"Palette generated using strategy: {prettify_name(strategy)}")
+
+            case _: # Default case for all other strategies
+                hex_codes, strategy = generate_random_palette(grid_rows, grid_cols, strategy, hue_shifts, color_bias_choice)
+                print(f"Palette generated using strategy: {prettify_name(strategy)}")
+
 
         # Create and save the palette image
         create_palette_image(hex_codes, strategy, grid_rows, grid_cols)
 
         # Ask if user wants to generate another palette
         while True:
-            another_input = input("\nWould you like to generate another palette? (y/n, default: y): ").lower() # Modified prompt to show default
-            if another_input == '': # Check for empty input
-                another = 'y' # Default to 'yes'
-                break
+            another_input = input("\nWould you like to generate another palette? (y/n, default: y): ").lower()  # Modified prompt to show default
+            if another_input == '':  # Check for empty input
+                another = 'y'
             elif another_input in ['y', 'yes', 'n', 'no']:
-                another = another_input # Use user's input
+                another = another_input  # Use user's input
                 break
-            print("Please enter 'y' or 'n'.")
+            else:
+                print("Please enter 'y' or 'n'.")
 
         generate_another = another in ['y', 'yes']
 
     print("Thank you for using the Color Palette Generator!")
+
 
 if __name__ == "__main__":
     main()

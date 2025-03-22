@@ -1,6 +1,6 @@
 import re
 import random
-import json # To save the selected colors to a JSON file
+import json  # To save the selected colors to JSON files
 
 scala_code = """
 Color.fromRGB255(0, 0, 0), // 0
@@ -136,14 +136,17 @@ Color.fromRGB255(240, 240, 225) // 127 - White ?
 # Regex to extract RGB values
 rgb_pattern = re.compile(r"Color\.fromRGB255\((\d+),\s*(\d+),\s*(\d+)\)")
 scala_colors_rgb = []
+excluded_colors_rgb = [(0, 0, 0), (240, 240, 225)] # List of colors to exclude
 
 for line in scala_code.strip().split('\n'):
     match = rgb_pattern.search(line)
     if match:
         r, g, b = map(int, match.groups())
-        scala_colors_rgb.append((r, g, b))
+        current_color_rgb = (r, g, b)
+        if current_color_rgb not in excluded_colors_rgb: # Exclude black and "white?"
+            scala_colors_rgb.append(current_color_rgb)
 
-print(f"Extracted {len(scala_colors_rgb)} RGB colors from Scala code.")
+print(f"Extracted {len(scala_colors_rgb)} RGB colors from Scala code (excluding black and 'white?').")
 
 def color_distance_rgb(color1_rgb, color2_rgb):
     """Calculates Euclidean distance between two RGB colors."""
@@ -151,7 +154,7 @@ def color_distance_rgb(color1_rgb, color2_rgb):
     r2, g2, b2 = color2_rgb
     return ((r1 - r2)**2 + (g1 - g2)**2 + (b1 - b2)**2)**0.5
 
-def select_distinct_colors(all_colors_rgb, num_to_select=64):
+def select_distinct_colors(all_colors_rgb, num_to_select=27):
     """Selects a set of maximally distinct colors, excluding or replacing black (0,0,0)."""
     selected_colors = []
     remaining_colors = list(all_colors_rgb)
@@ -183,57 +186,27 @@ def select_distinct_colors(all_colors_rgb, num_to_select=64):
         else:
             break
 
-    # 2. Check for and replace Dark Gray/Black (0, 0, 0)
-    black_rgb = (0, 0, 0)
-    if black_rgb in selected_colors:
-        print("Dark Gray/Black color (0, 0, 0) found in selected colors. Attempting to replace it.")
-        black_index = selected_colors.index(black_rgb)
-        selected_colors.pop(black_index) # Remove black
-
-        if remaining_colors: # Try to find a replacement if there are still colors left
-            best_replacement_color = None
-            max_min_distance_replacement = -1
-
-            for color in remaining_colors:
-                min_distance_replacement = float('inf')
-                for selected_color in selected_colors: # Note: selected_colors now without black
-                    distance = color_distance_rgb(color, selected_color)
-                    min_distance_replacement = min(min_distance_replacement, distance)
-
-                if min_distance_replacement > max_min_distance_replacement:
-                    max_min_distance_replacement = min_distance_replacement
-                    best_replacement_color = color
-
-            if best_replacement_color:
-                selected_colors.insert(black_index, best_replacement_color) # Insert replacement at black's original position
-                remaining_colors.remove(best_replacement_color)
-                print(f"Replaced Dark Gray/Black with a new distinct color: {best_replacement_color}")
-            else:
-                print("Warning: No suitable replacement found for Dark Gray/Black.")
-        else:
-            print("Warning: No remaining colors to replace Dark Gray/Black.")
-    else:
-        print("Dark Gray/Black color (0, 0, 0) not found in selected colors. No replacement needed.")
+    # 2. Check for and replace Dark Gray/Black (0, 0, 0) - Removed replacement logic for simplicity
 
     return selected_colors
 
-def save_twister_colors(num_colors):
-    output_file = f"mf_twister_{num_colors}_colors.json" # Filename for saved colors
+def save_twister_colors(colors, filename): # Modified to accept colors and filename
     try:
-        with open(output_file, 'w') as f:
-            json.dump(distinct_colors, f, indent=4) # Save as JSON, nicely formatted
-        print(f"Saved selected distinct colors to: {output_file}")
+        with open(filename, 'w') as f:
+            json.dump(colors, f, indent=4) # Save as JSON, nicely formatted
+        print(f"Saved colors to: {filename}")
     except Exception as e:
-        print(f"Error saving olors to {output_file}: {e}")
+        print(f"Error saving colors to {filename}: {e}")
 
-NUM_COLORS = 27
-distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS)
-save_twister_colors(NUM_COLORS)
+# --- Save ALL extracted colors (excluding black and "white?") ---
+all_colors_output_file = "mf_twister_all_colors.json" # Filename for all colors JSON
+save_twister_colors(scala_colors_rgb, all_colors_output_file) # Save all extracted colors
 
-NUM_COLORS = 64
-distinct_colors = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS)
-save_twister_colors(NUM_COLORS)
+# --- Save distinct color palettes (as before) ---
+NUM_COLORS_27 = 27
+distinct_colors_27 = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS_27)
+save_twister_colors(distinct_colors_27, f"mf_twister_{NUM_COLORS_27}_colors.json")
 
-# print(f"Selected {len(distinct_colors)} distinct RGB colors:")
-# for color in distinct_colors:
-#     print(color)
+NUM_COLORS_64 = 64
+distinct_colors_64 = select_distinct_colors(scala_colors_rgb, num_to_select=NUM_COLORS_64)
+save_twister_colors(distinct_colors_64, f"mf_twister_{NUM_COLORS_64}_colors.json")
